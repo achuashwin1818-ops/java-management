@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To-Do List App</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#f4f6f9;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+padding:20px;
+}
+
+.container{
+background:#fff;
+width:100%;
+max-width:500px;
+padding:25px;
+border-radius:12px;
+box-shadow:0 5px 15px rgba(0,0,0,.2);
+}
+
+h2{
+text-align:center;
+margin-bottom:20px;
+}
+
+.input-group{
+display:flex;
+gap:10px;
+margin-bottom:20px;
+}
+
+input{
+flex:1;
+padding:10px;
+font-size:16px;
+}
+
+button{
+padding:10px 15px;
+cursor:pointer;
+border:none;
+background:#007bff;
+color:#fff;
+border-radius:5px;
+}
+
+button:hover{
+background:#0056b3;
+}
+
+.filters{
+display:flex;
+justify-content:center;
+gap:10px;
+margin-bottom:20px;
+flex-wrap:wrap;
+}
+
+.filters button{
+background:#6c757d;
+}
+
+.filters button.active{
+background:#28a745;
+}
+
+ul{
+list-style:none;
+}
+
+li{
+display:flex;
+align-items:center;
+justify-content:space-between;
+background:#f8f9fa;
+padding:10px;
+margin-bottom:10px;
+border-radius:6px;
+}
+
+.task-left{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.completed{
+text-decoration:line-through;
+color:gray;
+}
+
+.actions button{
+margin-left:5px;
+padding:6px 10px;
+font-size:14px;
+}
+
+.edit{
+background:#ffc107;
+color:#000;
+}
+
+.delete{
+background:#dc3545;
+}
+
+@media(max-width:500px){
+.input-group{
+flex-direction:column;
+}
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h2>To-Do List</h2>
+
+<div class="input-group">
+<input type="text" id="taskInput" placeholder="Enter a task">
+<button id="addBtn">Add</button>
+</div>
+
+<div class="filters">
+<button class="filter active" data-filter="all">All</button>
+<button class="filter" data-filter="active">Active</button>
+<button class="filter" data-filter="completed">Completed</button>
+</div>
+
+<ul id="taskList"></ul>
+
+</div>
+
+<script>
+
+let tasks=JSON.parse(localStorage.getItem("tasks"))||[];
+let currentFilter="all";
+
+const input=document.getElementById("taskInput");
+const addBtn=document.getElementById("addBtn");
+const taskList=document.getElementById("taskList");
+
+function save(){
+localStorage.setItem("tasks",JSON.stringify(tasks));
+}
+
+function render(){
+
+taskList.innerHTML="";
+
+let filtered=tasks.filter(task=>{
+
+if(currentFilter==="active") return !task.completed;
+
+if(currentFilter==="completed") return task.completed;
+
+return true;
+
+});
+
+filtered.forEach(task=>{
+
+const li=document.createElement("li");
+
+li.dataset.id=task.id;
+
+li.innerHTML=`
+
+<div class="task-left">
+
+<input type="checkbox" class="toggle" ${task.completed?"checked":""}>
+
+<span class="${task.completed?"completed":""}">${task.text}</span>
+
+</div>
+
+<div class="actions">
+
+<button class="edit">Edit</button>
+
+<button class="delete">Delete</button>
+
+</div>
+
+`;
+
+taskList.appendChild(li);
+
+});
+
+}
+
+addBtn.onclick=()=>{
+
+const text=input.value.trim();
+
+if(text==="") return;
+
+tasks.push({
+
+id:Date.now(),
+
+text,
+
+completed:false
+
+});
+
+input.value="";
+
+save();
+
+render();
+
+};
+
+taskList.addEventListener("click",e=>{
+
+const li=e.target.closest("li");
+
+if(!li) return;
+
+const id=Number(li.dataset.id);
+
+const task=tasks.find(t=>t.id===id);
+
+if(e.target.classList.contains("delete")){
+
+tasks=tasks.filter(t=>t.id!==id);
+
+}
+
+if(e.target.classList.contains("edit")){
+
+let newText=prompt("Edit Task",task.text);
+
+if(newText && newText.trim()){
+
+task.text=newText.trim();
+
+}
+
+}
+
+save();
+
+render();
+
+});
+
+taskList.addEventListener("change",e=>{
+
+if(!e.target.classList.contains("toggle")) return;
+
+const li=e.target.closest("li");
+
+const id=Number(li.dataset.id);
+
+const task=tasks.find(t=>t.id===id);
+
+task.completed=e.target.checked;
+
+save();
+
+render();
+
+});
+
+document.querySelectorAll(".filter").forEach(btn=>{
+
+btn.onclick=()=>{
+
+document.querySelectorAll(".filter").forEach(b=>b.classList.remove("active"));
+
+btn.classList.add("active");
+
+currentFilter=btn.dataset.filter;
+
+render();
+
+};
+
+});
+
+render();
+
+</script>
+
+</body>
+</html>
